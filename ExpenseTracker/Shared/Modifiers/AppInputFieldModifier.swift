@@ -28,6 +28,13 @@ struct AppInputFieldModifier: ViewModifier {
                     style: .continuous
                 )
             )
+            .overlay {
+                RoundedRectangle(
+                    cornerRadius: AppRadius.sm,
+                    style: .continuous
+                )
+                .stroke(AppColors.controlBorder, lineWidth: 1)
+            }
     }
 }
 

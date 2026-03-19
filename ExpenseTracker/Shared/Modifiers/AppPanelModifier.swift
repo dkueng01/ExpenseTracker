@@ -17,6 +17,12 @@ struct AppPanelModifier: ViewModifier {
                 )
                 .stroke(AppColors.cardBorder, lineWidth: 1)
             }
+            .shadow(
+                color: Color.black.opacity(0.02),
+                radius: 6,
+                x: 0,
+                y: 2
+            )
     }
 }
 

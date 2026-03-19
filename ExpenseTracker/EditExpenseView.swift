@@ -7,8 +7,11 @@ struct EditExpenseView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
+    @Query(sort: \ExpenseCategory.sortOrder) private var categories:
+        [ExpenseCategory]
+
     @State private var amountText: String
-    @State private var selectedCategory: ExpenseCategory
+    @State private var selectedCategoryID: UUID?
     @State private var note: String
     @State private var date: Date
     @State private var isShowingMoreOptions: Bool
@@ -23,9 +26,7 @@ struct EditExpenseView: View {
         _amountText = State(
             initialValue: Self.formattedAmountString(for: expense.amount)
         )
-        _selectedCategory = State(
-            initialValue: ExpenseCategory.from(expense.category)
-        )
+        _selectedCategoryID = State(initialValue: expense.category?.id)
         _note = State(initialValue: expense.note)
         _date = State(initialValue: expense.date)
         _isShowingMoreOptions = State(
@@ -42,9 +43,22 @@ struct EditExpenseView: View {
         return Double(cleanedAmount)
     }
 
+    private var fallbackCategory: ExpenseCategory? {
+        categories.first(where: { $0.isFallback }) ?? categories.first
+    }
+
+    private var selectedCategory: ExpenseCategory? {
+        if let selectedCategoryID {
+            return categories.first(where: { $0.id == selectedCategoryID })
+                ?? fallbackCategory
+        }
+
+        return fallbackCategory
+    }
+
     private var canSave: Bool {
         guard let parsedAmount else { return false }
-        return parsedAmount > 0
+        return parsedAmount > 0 && selectedCategory != nil
     }
 
     var body: some View {
@@ -75,6 +89,11 @@ struct EditExpenseView: View {
                     Button("Close") {
                         dismiss()
                     }
+                }
+            }
+            .onAppear {
+                if selectedCategoryID == nil {
+                    selectedCategoryID = fallbackCategory?.id
                 }
             }
             .alert("Delete expense?", isPresented: $isShowingDeleteConfirmation) {
@@ -166,16 +185,16 @@ struct EditExpenseView: View {
                 ],
                 spacing: 12
             ) {
-                ForEach(ExpenseCategory.allCases) { category in
+                ForEach(categories) { category in
                     Button {
-                        selectedCategory = category
+                        selectedCategoryID = category.id
                         isAmountFieldFocused = false
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: category.systemImage)
                                 .font(.body.weight(.semibold))
 
-                            Text(category.rawValue)
+                            Text(category.name)
                                 .font(.body.weight(.semibold))
                                 .lineLimit(1)
 
@@ -185,12 +204,12 @@ struct EditExpenseView: View {
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity)
                         .background(
-                            selectedCategory == category
+                            selectedCategoryID == category.id
                                 ? category.color
                                 : Color(.secondarySystemBackground)
                         )
                         .foregroundStyle(
-                            selectedCategory == category
+                            selectedCategoryID == category.id
                                 ? .white
                                 : .primary
                         )
@@ -206,7 +225,7 @@ struct EditExpenseView: View {
                                 style: .continuous
                             )
                             .stroke(
-                                selectedCategory == category
+                                selectedCategoryID == category.id
                                     ? category.color
                                     : Color(.separator).opacity(0.25),
                                 lineWidth: 1
@@ -214,9 +233,9 @@ struct EditExpenseView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(category.rawValue)
+                    .accessibilityLabel(category.name)
                     .accessibilityAddTraits(
-                        selectedCategory == category ? [.isSelected] : []
+                        selectedCategoryID == category.id ? [.isSelected] : []
                     )
                 }
             }
@@ -343,9 +362,10 @@ struct EditExpenseView: View {
 
     private func saveChanges() {
         guard let parsedAmount else { return }
+        guard let selectedCategory else { return }
 
         expense.amount = parsedAmount
-        expense.category = selectedCategory.rawValue
+        expense.category = selectedCategory
         expense.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
         expense.date = date
 
@@ -362,10 +382,13 @@ struct EditExpenseView: View {
     EditExpenseView(
         expense: Expense(
             amount: 18.50,
-            category: "Food",
+            category: nil,
             note: "Lunch",
             date: .now
         )
     )
-    .modelContainer(for: Expense.self, inMemory: true)
+    .modelContainer(
+        for: [Expense.self, ExpenseCategory.self],
+        inMemory: true
+    )
 }

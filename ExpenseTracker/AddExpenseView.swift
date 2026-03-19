@@ -5,11 +5,13 @@ struct AddExpenseView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @AppStorage("lastUsedCategory") private var lastUsedCategory =
-        ExpenseCategory.defaultCategory.rawValue
+    @Query(sort: \ExpenseCategory.sortOrder) private var categories:
+        [ExpenseCategory]
+
+    @AppStorage("lastUsedCategoryID") private var lastUsedCategoryID = ""
 
     @State private var amountText = ""
-    @State private var selectedCategory = ExpenseCategory.defaultCategory
+    @State private var selectedCategoryID: UUID?
     @State private var note = ""
     @State private var date = Date()
     @State private var isShowingMoreOptions = false
@@ -26,9 +28,22 @@ struct AddExpenseView: View {
         return Double(cleanedAmount)
     }
 
+    private var fallbackCategory: ExpenseCategory? {
+        categories.first(where: { $0.isFallback }) ?? categories.first
+    }
+
+    private var selectedCategory: ExpenseCategory? {
+        if let selectedCategoryID {
+            return categories.first(where: { $0.id == selectedCategoryID })
+                ?? fallbackCategory
+        }
+
+        return fallbackCategory
+    }
+
     private var canSave: Bool {
         guard let parsedAmount else { return false }
-        return parsedAmount > 0
+        return parsedAmount > 0 && selectedCategory != nil
     }
 
     var body: some View {
@@ -62,7 +77,7 @@ struct AddExpenseView: View {
                 }
             }
             .onAppear {
-                selectedCategory = ExpenseCategory.from(lastUsedCategory)
+                restoreSelectedCategory()
                 isAmountFieldFocused = true
             }
         }
@@ -145,16 +160,16 @@ struct AddExpenseView: View {
                 ],
                 spacing: 12
             ) {
-                ForEach(ExpenseCategory.allCases) { category in
+                ForEach(categories) { category in
                     Button {
-                        selectedCategory = category
+                        selectedCategoryID = category.id
                         isAmountFieldFocused = false
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: category.systemImage)
                                 .font(.body.weight(.semibold))
 
-                            Text(category.rawValue)
+                            Text(category.name)
                                 .font(.body.weight(.semibold))
                                 .lineLimit(1)
 
@@ -164,12 +179,12 @@ struct AddExpenseView: View {
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity)
                         .background(
-                            selectedCategory == category
+                            selectedCategoryID == category.id
                                 ? category.color
                                 : Color(.secondarySystemBackground)
                         )
                         .foregroundStyle(
-                            selectedCategory == category
+                            selectedCategoryID == category.id
                                 ? .white
                                 : .primary
                         )
@@ -185,7 +200,7 @@ struct AddExpenseView: View {
                                 style: .continuous
                             )
                             .stroke(
-                                selectedCategory == category
+                                selectedCategoryID == category.id
                                     ? category.color
                                     : Color(.separator).opacity(0.25),
                                 lineWidth: 1
@@ -193,9 +208,9 @@ struct AddExpenseView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(category.rawValue)
+                    .accessibilityLabel(category.name)
                     .accessibilityAddTraits(
-                        selectedCategory == category ? [.isSelected] : []
+                        selectedCategoryID == category.id ? [.isSelected] : []
                     )
                 }
             }
@@ -296,6 +311,16 @@ struct AddExpenseView: View {
         .background(.regularMaterial)
     }
 
+    private func restoreSelectedCategory() {
+        if let storedID = UUID(uuidString: lastUsedCategoryID),
+            categories.contains(where: { $0.id == storedID })
+        {
+            selectedCategoryID = storedID
+        } else {
+            selectedCategoryID = fallbackCategory?.id
+        }
+    }
+
     private func addQuickAmount(_ value: Double) {
         let currentAmount = parsedAmount ?? 0
         let newAmount = currentAmount == 0 ? value : currentAmount + value
@@ -312,21 +337,25 @@ struct AddExpenseView: View {
 
     private func saveExpense() {
         guard let parsedAmount else { return }
+        guard let selectedCategory else { return }
 
         let expense = Expense(
             amount: parsedAmount,
-            category: selectedCategory.rawValue,
+            category: selectedCategory,
             note: note.trimmingCharacters(in: .whitespacesAndNewlines),
             date: date
         )
 
         modelContext.insert(expense)
-        lastUsedCategory = selectedCategory.rawValue
+        lastUsedCategoryID = selectedCategory.id.uuidString
         dismiss()
     }
 }
 
 #Preview {
     AddExpenseView()
-        .modelContainer(for: Expense.self, inMemory: true)
+        .modelContainer(
+            for: [Expense.self, ExpenseCategory.self],
+            inMemory: true
+        )
 }

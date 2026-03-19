@@ -5,8 +5,19 @@ import SwiftData
 struct ExpenseTrackerApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
-        .modelContainer(for: Expense.self)
+        .modelContainer(for: [Expense.self, ExpenseCategory.self])
+    }
+}
+
+private struct RootView: View {
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        MainTabView()
+            .task {
+                CategorySeeder.seedIfNeeded(in: modelContext)
+            }
     }
 }

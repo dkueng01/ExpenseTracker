@@ -163,5 +163,8 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Expense.self, inMemory: true)
+        .modelContainer(
+            for: [Expense.self, ExpenseCategory.self],
+            inMemory: true
+        )
 }

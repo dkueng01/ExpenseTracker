@@ -3,24 +3,32 @@ import SwiftUI
 struct ExpenseRowView: View {
     let expense: Expense
 
-    private var category: ExpenseCategory {
-        ExpenseCategory.from(expense.category)
+    private var categoryName: String {
+        expense.category?.name ?? "Uncategorized"
+    }
+
+    private var categoryImage: String {
+        expense.category?.systemImage ?? "square.grid.2x2.fill"
+    }
+
+    private var categoryColor: Color {
+        expense.category?.color ?? .gray
     }
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(category.color.opacity(0.14))
+                    .fill(categoryColor.opacity(0.14))
                     .frame(width: 44, height: 44)
 
-                Image(systemName: category.systemImage)
+                Image(systemName: categoryImage)
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(category.color)
+                    .foregroundStyle(categoryColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(expense.category)
+                Text(categoryName)
                     .font(.headline)
 
                 if !expense.note.isEmpty {
@@ -65,9 +73,9 @@ struct ExpenseRowView: View {
         let date = expense.date.formatted(date: .long, time: .omitted)
 
         if expense.note.isEmpty {
-            return "\(expense.category), \(amount), \(date)"
+            return "\(categoryName), \(amount), \(date)"
         } else {
-            return "\(expense.category), \(amount), \(expense.note), \(date)"
+            return "\(categoryName), \(amount), \(expense.note), \(date)"
         }
     }
 }
@@ -76,7 +84,7 @@ struct ExpenseRowView: View {
     ExpenseRowView(
         expense: Expense(
             amount: 20,
-            category: "Food",
+            category: nil,
             note: "",
             date: .now
         )

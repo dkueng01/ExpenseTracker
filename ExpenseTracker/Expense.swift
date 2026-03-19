@@ -4,13 +4,13 @@ import SwiftData
 @Model
 final class Expense {
     var amount: Double
-    var category: String
     var note: String
     var date: Date
+    var category: ExpenseCategory?
 
     init(
         amount: Double,
-        category: String,
+        category: ExpenseCategory? = nil,
         note: String = "",
         date: Date = .now
     ) {

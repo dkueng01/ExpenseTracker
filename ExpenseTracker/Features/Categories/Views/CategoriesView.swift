@@ -114,15 +114,14 @@ struct CategoriesView: View {
 
     private func deleteSelectedCategory() {
         guard let category = categoryToDelete else { return }
-        guard !category.isFallback else { return }
         guard let fallbackCategory else { return }
-        guard fallbackCategory.id != category.id else { return }
 
-        for expense in category.expenses {
-            expense.category = fallbackCategory
-        }
+        CategorySupport.deleteCategory(
+            category,
+            fallbackCategory: fallbackCategory,
+            in: modelContext
+        )
 
-        modelContext.delete(category)
         categoryToDelete = nil
     }
 }

@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 enum CategorySupport {
@@ -42,6 +43,15 @@ enum CategorySupport {
         categories.first(where: { $0.isFallback }) ?? categories.first
     }
 
+    static func canDelete(
+        category: ExpenseCategory,
+        fallbackCategory: ExpenseCategory?
+    ) -> Bool {
+        guard !category.isFallback else { return false }
+        guard let fallbackCategory else { return false }
+        return fallbackCategory.id != category.id
+    }
+
     static func deleteMessage(
         for category: ExpenseCategory?,
         fallbackCategory: ExpenseCategory?
@@ -63,5 +73,20 @@ enum CategorySupport {
             return "This category will be removed and its \(expenseCount) "
                 + "expenses will be moved to \(fallbackName)."
         }
+    }
+
+    static func deleteCategory(
+        _ category: ExpenseCategory,
+        fallbackCategory: ExpenseCategory,
+        in modelContext: ModelContext
+    ) {
+        guard !category.isFallback else { return }
+        guard fallbackCategory.id != category.id else { return }
+
+        for expense in category.expenses {
+            expense.category = fallbackCategory
+        }
+
+        modelContext.delete(category)
     }
 }

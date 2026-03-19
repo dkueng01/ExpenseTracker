@@ -13,6 +13,7 @@ struct CategoryEditorView: View {
     @State private var name: String
     @State private var selectedIcon: String
     @State private var selectedColorName: String
+    @State private var isShowingDeleteConfirmation = false
 
     @FocusState private var isNameFieldFocused: Bool
 
@@ -25,6 +26,26 @@ struct CategoryEditorView: View {
         _selectedColorName = State(
             initialValue: category?.colorName
                 ?? CategorySupport.defaultColorName
+        )
+    }
+    
+    private var fallbackCategory: ExpenseCategory? {
+        CategorySupport.fallbackCategory(in: categories)
+    }
+
+    private var canDeleteCategory: Bool {
+        guard let category else { return false }
+
+        return CategorySupport.canDelete(
+            category: category,
+            fallbackCategory: fallbackCategory
+        )
+    }
+
+    private var deleteMessage: String {
+        CategorySupport.deleteMessage(
+            for: category,
+            fallbackCategory: fallbackCategory
         )
     }
 
@@ -95,17 +116,33 @@ struct CategoryEditorView: View {
                 fallbackInfoSection
             }
         } footer: {
-            AppPrimaryButton(
-                title: saveButtonTitle,
-                isEnabled: canSave
-            ) {
-                saveCategory()
+            VStack(spacing: AppSpacing.sm) {
+                AppPrimaryButton(
+                    title: saveButtonTitle,
+                    isEnabled: canSave
+                ) {
+                    saveCategory()
+                }
+
+                if isEditing && canDeleteCategory {
+                    AppDestructiveButton(title: "Delete Category") {
+                        isShowingDeleteConfirmation = true
+                    }
+                }
             }
         }
         .onAppear {
             DispatchQueue.main.async {
                 isNameFieldFocused = true
             }
+        }.alert("Delete category?", isPresented: $isShowingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                deleteCategory()
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(deleteMessage)
         }
     }
 
@@ -141,6 +178,19 @@ struct CategoryEditorView: View {
 
             modelContext.insert(newCategory)
         }
+
+        dismiss()
+    }
+    
+    private func deleteCategory() {
+        guard let category else { return }
+        guard let fallbackCategory else { return }
+
+        CategorySupport.deleteCategory(
+            category,
+            fallbackCategory: fallbackCategory,
+            in: modelContext
+        )
 
         dismiss()
     }

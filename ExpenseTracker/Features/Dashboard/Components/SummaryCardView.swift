@@ -7,21 +7,18 @@ struct SummaryCardView: View {
     let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(color.opacity(0.12))
-                    .frame(width: 42, height: 42)
-
-                Image(systemName: systemImage)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(color)
-            }
+        VStack(alignment: .leading, spacing: AppSpacing.md) {
+            AppIconBadge(
+                systemImage: systemImage,
+                color: color,
+                size: 42,
+                style: .roundedRect
+            )
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.secondaryText)
 
                 Text(amount, format: .currency(code: "EUR"))
                     .font(.title3.bold())
@@ -30,14 +27,8 @@ struct SummaryCardView: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-        .padding(16)
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color(.separator).opacity(0.10), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.04), radius: 10, y: 4)
+        .padding(AppSpacing.cardPadding)
+        .appCardStyle()
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title) total")
         .accessibilityValue(Text(amount, format: .currency(code: "EUR")))
@@ -61,5 +52,5 @@ struct SummaryCardView: View {
         )
     }
     .padding()
-    .background(Color(.systemGroupedBackground))
+    .background(AppColors.screenBackground)
 }

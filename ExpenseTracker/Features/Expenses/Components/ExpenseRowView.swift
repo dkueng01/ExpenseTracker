@@ -17,34 +17,41 @@ struct ExpenseRowView: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(categoryColor.opacity(0.14))
-                    .frame(width: 44, height: 44)
+        if showsBackground {
+            rowContent
+                .appCardStyle()
+        } else {
+            rowContent
+        }
+    }
 
-                Image(systemName: categoryImage)
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(categoryColor)
-            }
+    private var rowContent: some View {
+        HStack(spacing: AppSpacing.md) {
+            AppIconBadge(
+                systemImage: categoryImage,
+                color: categoryColor,
+                size: 44,
+                style: .roundedRect
+            )
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(categoryName)
-                    .font(.headline)
+                    .font(.appCardTitle)
+                    .foregroundStyle(AppColors.primaryText)
 
                 if !expense.note.isEmpty {
                     Text(expense.note)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(AppColors.secondaryText)
                         .lineLimit(1)
                 } else {
                     Text(expense.date, format: .dateTime.day().month().year())
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.appCaption)
+                        .foregroundStyle(AppColors.secondaryText)
                 }
             }
 
-            Spacer(minLength: 12)
+            Spacer(minLength: AppSpacing.sm)
 
             VStack(alignment: .trailing, spacing: 4) {
                 Text(expense.amount, format: .currency(code: "EUR"))
@@ -53,24 +60,12 @@ struct ExpenseRowView: View {
 
                 if !expense.note.isEmpty {
                     Text(expense.date, format: .dateTime.day().month().year())
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.appCaption)
+                        .foregroundStyle(AppColors.secondaryText)
                 }
             }
         }
-        .padding(14)
-        .background {
-            if showsBackground {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(.systemBackground))
-            }
-        }
-        .overlay {
-            if showsBackground {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color(.separator).opacity(0.12), lineWidth: 1)
-            }
-        }
+        .padding(AppSpacing.md)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }
@@ -97,5 +92,5 @@ struct ExpenseRowView: View {
         )
     )
     .padding()
-    .background(Color(.systemGroupedBackground))
+    .background(AppColors.screenBackground)
 }

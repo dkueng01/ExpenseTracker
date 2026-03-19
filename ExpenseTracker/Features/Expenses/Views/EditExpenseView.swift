@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct EditExpenseView: View {
     let expense: Expense
@@ -61,175 +61,111 @@ struct EditExpenseView: View {
         return parsedAmount > 0 && selectedCategory != nil
     }
 
+    private var saveAmountText: String? {
+        parsedAmount?.formatted(.currency(code: "EUR"))
+    }
+
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        amountSection
-                        categorySection
-                        detailsSection
-                    }
-                    .padding(20)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isAmountFieldFocused = false
-                    }
-                }
-                .scrollDismissesKeyboard(.interactively)
-                .background(Color(.systemGroupedBackground))
-
-                bottomBar
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Edit Expense")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
-            }
-            .onAppear {
-                if selectedCategoryID == nil {
-                    selectedCategoryID = fallbackCategory?.id
-                }
-            }
-            .alert("Delete expense?", isPresented: $isShowingDeleteConfirmation) {
-                Button("Delete", role: .destructive) {
-                    deleteExpense()
+        AppSheetScaffold(
+            title: "Edit Expense",
+            cancelTitle: "Close",
+            onCancel: { dismiss() }
+        ) {
+            amountSection
+            categorySection
+            detailsSection
+        } footer: {
+            VStack(spacing: AppSpacing.sm) {
+                AppPrimaryButton(
+                    title: "Save Changes",
+                    trailingText: saveAmountText,
+                    isEnabled: canSave
+                ) {
+                    saveChanges()
                 }
 
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This action cannot be undone.")
+                AppDestructiveButton(title: "Delete Expense") {
+                    isShowingDeleteConfirmation = true
+                }
             }
+        }
+        .onAppear {
+            if selectedCategoryID == nil {
+                selectedCategoryID = fallbackCategory?.id
+            }
+        }
+        .alert("Delete expense?", isPresented: $isShowingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                deleteExpense()
+            }
+
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
         }
     }
 
     private var amountSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Amount")
-                .font(.headline)
-
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+        AppFormSection(title: "Amount") {
+            VStack(alignment: .leading, spacing: AppSpacing.xl) {
+                HStack(
+                    alignment: .firstTextBaseline,
+                    spacing: AppSpacing.xs
+                ) {
                     Text("€")
-                        .font(
-                            .system(
-                                size: 30,
-                                weight: .bold,
-                                design: .rounded
-                            )
-                        )
-                        .foregroundStyle(.secondary)
+                        .font(.appAmountSymbol)
+                        .foregroundStyle(AppColors.secondaryText)
 
                     TextField("0.00", text: $amountText)
                         .keyboardType(.decimalPad)
-                        .font(
-                            .system(
-                                size: 42,
-                                weight: .bold,
-                                design: .rounded
-                            )
-                        )
+                        .font(.appAmountValue)
                         .focused($isAmountFieldFocused)
                         .accessibilityLabel("Amount")
                 }
 
                 LazyVGrid(
                     columns: [
-                        GridItem(.adaptive(minimum: 72), spacing: 12),
+                        GridItem(.adaptive(minimum: 72), spacing: AppSpacing.sm),
                     ],
-                    spacing: 12
+                    spacing: AppSpacing.sm
                 ) {
                     ForEach(quickAmounts, id: \.self) { value in
-                        Button {
-                            addQuickAmount(value)
-                        } label: {
-                            Text(value, format: .currency(code: "EUR"))
-                                .font(.body.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.blue.opacity(0.10))
-                                .foregroundStyle(.blue)
-                                .clipShape(
-                                    RoundedRectangle(
-                                        cornerRadius: 12,
-                                        style: .continuous
-                                    )
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        quickAmountButton(for: value)
                     }
                 }
             }
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
+            .padding(AppSpacing.contentPadding)
+            .appPanelStyle()
         }
     }
 
     private var categorySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Category")
-                .font(.headline)
-
+        AppFormSection(title: "Category") {
             LazyVGrid(
                 columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: AppSpacing.sm),
+                    GridItem(.flexible(), spacing: AppSpacing.sm),
                 ],
-                spacing: 12
+                spacing: AppSpacing.sm
             ) {
                 ForEach(categories) { category in
                     Button {
                         selectedCategoryID = category.id
                         isAmountFieldFocused = false
                     } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: category.systemImage)
-                                .font(.body.weight(.semibold))
+                        AppSelectableTile(
+                            isSelected: selectedCategoryID == category.id,
+                            tint: category.color
+                        ) {
+                            HStack(spacing: 10) {
+                                Image(systemName: category.systemImage)
 
-                            Text(category.name)
-                                .font(.body.weight(.semibold))
-                                .lineLimit(1)
+                                Text(category.name)
+                                    .lineLimit(1)
 
-                            Spacer()
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            selectedCategoryID == category.id
-                                ? category.color
-                                : Color(.secondarySystemBackground)
-                        )
-                        .foregroundStyle(
-                            selectedCategoryID == category.id
-                                ? .white
-                                : .primary
-                        )
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
-                            )
-                        )
-                        .overlay {
-                            RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
-                            )
-                            .stroke(
-                                selectedCategoryID == category.id
-                                    ? category.color
-                                    : Color(.separator).opacity(0.25),
-                                lineWidth: 1
-                            )
+                                Spacer()
+                            }
+                            .font(.appBodyStrong)
                         }
                     }
                     .buttonStyle(.plain)
@@ -243,15 +179,18 @@ struct EditExpenseView: View {
     }
 
     private var detailsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Button {
+                isAmountFieldFocused = false
+
                 withAnimation(.snappy) {
                     isShowingMoreOptions.toggle()
                 }
             } label: {
                 HStack {
                     Text("More options")
-                        .font(.headline)
+                        .font(.appSectionTitle)
+                        .foregroundStyle(AppColors.primaryText)
 
                     Spacer()
 
@@ -261,28 +200,18 @@ struct EditExpenseView: View {
                             : "chevron.down"
                     )
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppColors.secondaryText)
                 }
-                .padding(18)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                )
+                .padding(AppSpacing.contentPadding)
+                .appPanelStyle()
             }
             .buttonStyle(.plain)
 
             if isShowingMoreOptions {
-                VStack(spacing: 16) {
+                VStack(spacing: AppSpacing.lg) {
                     TextField("Note (optional)", text: $note)
                         .textInputAutocapitalization(.sentences)
-                        .padding(14)
-                        .background(Color(.tertiarySystemBackground))
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 12,
-                                style: .continuous
-                            )
-                        )
+                        .appInputFieldStyle()
 
                     DatePicker(
                         "Date",
@@ -290,60 +219,31 @@ struct EditExpenseView: View {
                         displayedComponents: [.date]
                     )
                 }
-                .padding(18)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                )
+                .padding(AppSpacing.contentPadding)
+                .appPanelStyle()
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
     }
 
-    private var bottomBar: some View {
-        VStack(spacing: 10) {
-            Divider()
-
-            Button {
-                saveChanges()
-            } label: {
-                HStack {
-                    Text("Save Changes")
-                        .font(.headline)
-
-                    Spacer()
-
-                    if let parsedAmount {
-                        Text(parsedAmount, format: .currency(code: "EUR"))
-                            .font(.headline)
-                            .monospacedDigit()
-                    }
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .padding(.vertical, 16)
+    private func quickAmountButton(for value: Double) -> some View {
+        Button {
+            addQuickAmount(value)
+        } label: {
+            Text(value, format: .currency(code: "EUR"))
+                .font(.appBodyStrong)
                 .frame(maxWidth: .infinity)
-                .background(canSave ? Color.blue : Color.gray.opacity(0.4))
+                .padding(.vertical, AppSpacing.sm)
+                .background(AppColors.primaryTint.opacity(0.10))
+                .foregroundStyle(AppColors.primaryTint)
                 .clipShape(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(
+                        cornerRadius: AppRadius.sm,
+                        style: .continuous
+                    )
                 )
-            }
-            .disabled(!canSave)
-
-            Button(role: .destructive) {
-                isShowingDeleteConfirmation = true
-            } label: {
-                Text("Delete Expense")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-            }
-            .buttonStyle(.borderless)
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
-        .background(.regularMaterial)
+        .buttonStyle(.plain)
     }
 
     private func addQuickAmount(_ value: Double) {

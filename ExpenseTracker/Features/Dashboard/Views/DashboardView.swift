@@ -3,6 +3,7 @@ import SwiftData
 
 struct DashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
 
@@ -109,9 +110,20 @@ struct DashboardView: View {
                                 )
                             }
                             .buttonStyle(.plain)
-                            .accessibilityHint(
-                                "Opens this expense for editing"
-                            )
+                            .accessibilityHint("Opens this expense for editing")
+                            .contextMenu {
+                                Button {
+                                    selectedExpense = expense
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+
+                                Button(role: .destructive) {
+                                    deleteExpense(expense)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
 
                             if index < expenses.count - 1 {
                                 Divider()
@@ -140,6 +152,10 @@ struct DashboardView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
+    }
+    
+    private func deleteExpense(_ expense: Expense) {
+        modelContext.delete(expense)
     }
 }
 

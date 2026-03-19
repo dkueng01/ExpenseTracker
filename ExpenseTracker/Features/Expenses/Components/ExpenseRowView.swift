@@ -31,7 +31,7 @@ struct ExpenseRowView: View {
                 systemImage: categoryImage,
                 color: categoryColor,
                 size: 44,
-                style: .roundedRect
+                style: .circle
             )
 
             VStack(alignment: .leading, spacing: 4) {
@@ -66,6 +66,8 @@ struct ExpenseRowView: View {
             }
         }
         .padding(AppSpacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
     }

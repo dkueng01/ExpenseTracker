@@ -1,5 +1,5 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct CategoryEditorView: View {
     private let category: ExpenseCategory?
@@ -20,12 +20,11 @@ struct CategoryEditorView: View {
         self.category = category
         _name = State(initialValue: category?.name ?? "")
         _selectedIcon = State(
-            initialValue: category?.systemImage
-                ?? CategoryIconOption.tag.rawValue
+            initialValue: category?.systemImage ?? CategorySupport.defaultIcon
         )
         _selectedColorName = State(
             initialValue: category?.colorName
-                ?? CategoryColorOption.blue.rawValue
+                ?? CategorySupport.defaultColorName
         )
     }
 
@@ -34,17 +33,15 @@ struct CategoryEditorView: View {
     }
 
     private var trimmedName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
+        CategorySupport.trimmedName(name)
     }
 
     private var isDuplicateName: Bool {
-        categories.contains { existingCategory in
-            existingCategory.id != category?.id
-                && existingCategory.name
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .localizedCaseInsensitiveCompare(trimmedName)
-                    == .orderedSame
-        }
+        CategorySupport.isDuplicateName(
+            name,
+            currentCategoryID: category?.id,
+            in: categories
+        )
     }
 
     private var canSave: Bool {
@@ -52,279 +49,77 @@ struct CategoryEditorView: View {
     }
 
     private var selectedColor: Color {
-        CategoryColorOption(rawValue: selectedColorName)?.color ?? .blue
+        CategorySupport.selectedColor(for: selectedColorName)
+    }
+
+    private var saveButtonTitle: String {
+        isEditing ? "Save Changes" : "Save Category"
+    }
+
+    private var sheetTitle: String {
+        isEditing ? "Edit Category" : "New Category"
+    }
+
+    private var cancelTitle: String {
+        isEditing ? "Close" : "Cancel"
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        previewSection
-                        nameSection
-                        iconSection
-                        colorSection
+        AppSheetScaffold(
+            title: sheetTitle,
+            cancelTitle: cancelTitle,
+            onCancel: { dismiss() }
+        ) {
+            CategoryPreviewSection(
+                name: name,
+                selectedIcon: selectedIcon,
+                selectedColor: selectedColor
+            )
 
-                        if category?.isFallback == true {
-                            fallbackInfoSection
-                        }
-                    }
-                    .padding(20)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isNameFieldFocused = false
-                    }
-                }
-                .scrollDismissesKeyboard(.interactively)
-                .background(Color(.systemGroupedBackground))
+            CategoryNameSection(
+                name: $name,
+                isDuplicateName: isDuplicateName,
+                nameFieldFocus: $isNameFieldFocused
+            )
 
-                saveBar
+            CategoryIconPickerSection(
+                selectedIcon: $selectedIcon,
+                selectedColor: selectedColor
+            )
+
+            CategoryColorPickerSection(
+                selectedColorName: $selectedColorName
+            )
+
+            if category?.isFallback == true {
+                fallbackInfoSection
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(isEditing ? "Edit Category" : "New Category")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(isEditing ? "Close" : "Cancel") {
-                        dismiss()
-                    }
-                }
+        } footer: {
+            AppPrimaryButton(
+                title: saveButtonTitle,
+                isEnabled: canSave
+            ) {
+                saveCategory()
             }
-            .onAppear {
+        }
+        .onAppear {
+            DispatchQueue.main.async {
                 isNameFieldFocused = true
             }
         }
     }
 
-    private var previewSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Preview")
-                .font(.headline)
-
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .fill(selectedColor.opacity(0.14))
-                        .frame(width: 52, height: 52)
-
-                    Image(systemName: selectedIcon)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(selectedColor)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(trimmedName.isEmpty ? "Category name" : trimmedName)
-                        .font(.headline)
-
-                    Text("How this category will appear")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-            }
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-        }
-    }
-
-    private var nameSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Name")
-                .font(.headline)
-
-            VStack(alignment: .leading, spacing: 10) {
-                TextField("Category name", text: $name)
-                    .focused($isNameFieldFocused)
-                    .textInputAutocapitalization(.words)
-                    .padding(14)
-                    .background(Color(.tertiarySystemBackground))
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 12,
-                            style: .continuous
-                        )
-                    )
-
-                if isDuplicateName {
-                    Text("A category with this name already exists.")
-                        .font(.footnote)
-                        .foregroundStyle(.red)
-                }
-            }
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-        }
-    }
-
-    private var iconSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Icon")
-                .font(.headline)
-
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 60), spacing: 12),
-                ],
-                spacing: 12
-            ) {
-                ForEach(CategoryIconOption.allCases) { icon in
-                    Button {
-                        selectedIcon = icon.rawValue
-                    } label: {
-                        Image(systemName: icon.rawValue)
-                            .font(.title3)
-                            .frame(maxWidth: .infinity, minHeight: 52)
-                            .background(
-                                selectedIcon == icon.rawValue
-                                    ? selectedColor.opacity(0.14)
-                                    : Color(.tertiarySystemBackground)
-                            )
-                            .foregroundStyle(
-                                selectedIcon == icon.rawValue
-                                    ? selectedColor
-                                    : .primary
-                            )
-                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 14,
-                                    style: .continuous
-                                )
-                            )
-                            .overlay {
-                                RoundedRectangle(
-                                    cornerRadius: 14,
-                                    style: .continuous
-                                )
-                                .stroke(
-                                    selectedIcon == icon.rawValue
-                                        ? selectedColor
-                                        : Color(.separator).opacity(0.25),
-                                    lineWidth: 1
-                                )
-                            }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-        }
-    }
-
-    private var colorSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Color")
-                .font(.headline)
-
-            LazyVGrid(
-                columns: [
-                    GridItem(.adaptive(minimum: 60), spacing: 12),
-                ],
-                spacing: 12
-            ) {
-                ForEach(CategoryColorOption.allCases) { option in
-                    Button {
-                        selectedColorName = option.rawValue
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(option.color)
-                                .frame(width: 34, height: 34)
-
-                            if selectedColorName == option.rawValue {
-                                Image(systemName: "checkmark")
-                                    .font(.caption.weight(.bold))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 52)
-                        .background(Color(.tertiarySystemBackground))
-                        .clipShape(
-                            RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
-                            )
-                        )
-                        .overlay {
-                            RoundedRectangle(
-                                cornerRadius: 14,
-                                style: .continuous
-                            )
-                            .stroke(
-                                selectedColorName == option.rawValue
-                                    ? option.color
-                                    : Color(.separator).opacity(0.25),
-                                lineWidth: 1
-                            )
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
-        }
-    }
-
     private var fallbackInfoSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Info")
-                .font(.headline)
-
+        AppFormSection(title: "Info") {
             Text(
                 "This is the fallback category. It cannot be deleted because "
                     + "the app uses it when other categories are removed."
             )
             .font(.subheadline)
-            .foregroundStyle(.secondary)
-            .padding(18)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-            )
+            .foregroundStyle(AppColors.secondaryText)
+            .padding(AppSpacing.contentPadding)
+            .appPanelStyle()
         }
-    }
-
-    private var saveBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-
-            Button {
-                saveCategory()
-            } label: {
-                Text(isEditing ? "Save Changes" : "Save Category")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 16)
-                    .background(canSave ? Color.blue : Color.gray.opacity(0.4))
-                    .clipShape(
-                        RoundedRectangle(
-                            cornerRadius: 18,
-                            style: .continuous
-                        )
-                    )
-            }
-            .disabled(!canSave)
-            .padding(.horizontal, 20)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
-        }
-        .background(.regularMaterial)
     }
 
     private func saveCategory() {

@@ -42,32 +42,56 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 24) {
+                List {
+                    Section {
                         overviewSection
-                        recentExpensesSection
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 8,
+                                    leading: 20,
+                                    bottom: 8,
+                                    trailing: 20
+                                )
+                            )
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    } header: {
+                        EmptyView()
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
-                    .padding(.bottom, 100)
+
+                    Section("Recent Expenses") {
+                        recentExpensesCard
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: 4,
+                                    leading: 20,
+                                    bottom: 12,
+                                    trailing: 20
+                                )
+                            )
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
                 }
-                .scrollIndicators(.hidden)
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
                 .background(Color(.systemGroupedBackground))
+                .navigationTitle("Expenses")
+                .navigationBarTitleDisplayMode(.large)
+                .sheet(isPresented: $isShowingAddExpense) {
+                    AddExpenseView()
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                }
+                .sheet(item: $selectedExpense) { expense in
+                    EditExpenseView(expense: expense)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                }
 
                 addButton
             }
             .background(Color(.systemGroupedBackground))
-            .toolbar(.hidden, for: .navigationBar)
-            .sheet(isPresented: $isShowingAddExpense) {
-                AddExpenseView()
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-            }
-            .sheet(item: $selectedExpense) { expense in
-                EditExpenseView(expense: expense)
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-            }
         }
     }
 
@@ -94,46 +118,62 @@ struct ContentView: View {
         }
     }
 
-    private var recentExpensesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Expenses")
-                .font(.title3.bold())
-
+    private var recentExpensesCard: some View {
+        Group {
             if expenses.isEmpty {
-                VStack(spacing: 10) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 34))
-                        .foregroundStyle(.blue)
-
-                    Text("No expenses yet")
-                        .font(.headline)
-
-                    Text("Tap the add button to create your first expense.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 28)
-                .padding(.horizontal, 20)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                )
+                emptyStateContent
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 28)
             } else {
-                LazyVStack(spacing: 10) {
-                    ForEach(expenses) { expense in
+                VStack(spacing: 0) {
+                    ForEach(expenses.indices, id: \.self) { index in
+                        let expense = expenses[index]
+
                         Button {
                             selectedExpense = expense
                         } label: {
-                            ExpenseRowView(expense: expense)
+                            ExpenseRowView(
+                                expense: expense,
+                                showsBackground: false
+                            )
                         }
                         .buttonStyle(.plain)
                         .accessibilityHint("Opens this expense for editing")
+
+                        if index < expenses.count - 1 {
+                            Divider()
+                                .padding(.horizontal, 14)
+                        }
                     }
                 }
             }
         }
+        .background(Color(.systemBackground))
+        .clipShape(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color(.separator).opacity(0.10), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 10, y: 4)
+    }
+
+    private var emptyStateContent: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 34))
+                .foregroundStyle(.blue)
+
+            Text("No expenses yet")
+                .font(.headline)
+
+            Text("Tap the add button to create your first expense.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private var addButton: some View {

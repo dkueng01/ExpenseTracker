@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExpenseRowView: View {
     let expense: Expense
+    var showsBackground = true
 
     private var categoryName: String {
         expense.category?.name ?? "Uncategorized"
@@ -58,11 +59,17 @@ struct ExpenseRowView: View {
             }
         }
         .padding(14)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .background {
+            if showsBackground {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(.systemBackground))
+            }
+        }
         .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.separator).opacity(0.12), lineWidth: 1)
+            if showsBackground {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color(.separator).opacity(0.12), lineWidth: 1)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)

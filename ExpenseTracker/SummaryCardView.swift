@@ -31,12 +31,13 @@ struct SummaryCardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
         .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(color.opacity(0.10), lineWidth: 1)
+                .stroke(Color(.separator).opacity(0.10), lineWidth: 1)
         }
+        .shadow(color: .black.opacity(0.04), radius: 10, y: 4)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title) total")
         .accessibilityValue(Text(amount, format: .currency(code: "EUR")))

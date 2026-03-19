@@ -3,9 +3,9 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            ContentView()
+            DashboardView()
                 .tabItem {
-                    Label("Expenses", systemImage: "list.bullet.rectangle")
+                    Label("Dashboard", systemImage: "list.bullet.rectangle")
                 }
 
             CategoriesView()

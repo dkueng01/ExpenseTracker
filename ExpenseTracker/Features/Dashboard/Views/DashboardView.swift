@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct DashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
@@ -202,7 +202,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    DashboardView()
         .modelContainer(
             for: [Expense.self, ExpenseCategory.self],
             inMemory: true

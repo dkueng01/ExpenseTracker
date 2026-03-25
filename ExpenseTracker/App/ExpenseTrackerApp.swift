@@ -1,13 +1,21 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct ExpenseTrackerApp: App {
+    private let sharedModelContainer: ModelContainer = {
+        do {
+            return try AppModelContainer.make()
+        } catch {
+            fatalError("Failed to create ModelContainer: \(error)")
+        }
+    }()
+
     var body: some Scene {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [Expense.self, ExpenseCategory.self])
+        .modelContainer(sharedModelContainer)
     }
 }
 

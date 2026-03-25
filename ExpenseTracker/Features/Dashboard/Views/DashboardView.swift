@@ -156,6 +156,8 @@ struct DashboardView: View {
     
     private func deleteExpense(_ expense: Expense) {
         modelContext.delete(expense)
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
     }
 }
 

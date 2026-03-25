@@ -244,12 +244,17 @@ struct ExpenseEditorView: View {
             expense.date = date
         }
 
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
         dismiss()
     }
 
     private func deleteExpense() {
         guard case .edit(let expense) = mode else { return }
         modelContext.delete(expense)
+        
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
         dismiss()
     }
 }

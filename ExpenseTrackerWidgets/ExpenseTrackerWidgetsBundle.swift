@@ -1,16 +1,9 @@
-//
-//  ExpenseTrackerWidgetsBundle.swift
-//  ExpenseTrackerWidgets
-//
-//  Created by David Küng on 25.03.26.
-//
-
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 @main
 struct ExpenseTrackerWidgetsBundle: WidgetBundle {
     var body: some Widget {
-        ExpenseTrackerWidgets()
+        WeeklySpendWidget()
     }
 }

@@ -68,11 +68,25 @@
 			);
 			target = 9F91032C2F73EF5A0006BE19 /* ExpenseTrackerWidgetsExtension */;
 		};
+		9F91034E2F73F41C0006BE19 /* Exceptions for "ExpenseTracker" folder in "ExpenseTrackerWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/Models/Expense.swift,
+				Core/Models/ExpenseCategory.swift,
+				Core/Persistence/AppModelContainer.swift,
+				Core/Statistics/ExpenseStatistics.swift,
+				Features/Categories/Support/CategoryColorOption.swift,
+			);
+			target = 9F91032C2F73EF5A0006BE19 /* ExpenseTrackerWidgetsExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9F1BEFBC2F6B041C0036B772 /* ExpenseTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9F91034E2F73F41C0006BE19 /* Exceptions for "ExpenseTracker" folder in "ExpenseTrackerWidgetsExtension" target */,
+			);
 			path = ExpenseTracker;
 			sourceTree = "<group>";
 		};

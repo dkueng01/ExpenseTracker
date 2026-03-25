@@ -121,7 +121,9 @@ struct CategoriesView: View {
             fallbackCategory: fallbackCategory,
             in: modelContext
         )
-
+        
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
         categoryToDelete = nil
     }
 }

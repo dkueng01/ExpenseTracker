@@ -179,6 +179,8 @@ struct CategoryEditorView: View {
             modelContext.insert(newCategory)
         }
 
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
         dismiss()
     }
     
@@ -192,6 +194,8 @@ struct CategoryEditorView: View {
             in: modelContext
         )
 
+        try? modelContext.save()
+        AppWidgetReloader.reloadAll()
         dismiss()
     }
 }

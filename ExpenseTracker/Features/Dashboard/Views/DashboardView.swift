@@ -1,11 +1,21 @@
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct DashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
+
+    @AppStorage(SettingsStorage.isSpendingLimitEnabledKey)
+    private var isSpendingLimitEnabled = false
+
+    @AppStorage(SettingsStorage.spendingLimitAmountKey)
+    private var spendingLimitAmount = 0.0
+
+    @AppStorage(SettingsStorage.spendingLimitPeriodKey)
+    private var spendingLimitPeriodRawValue =
+        SpendingLimitPeriod.monthly.rawValue
 
     @State private var isShowingAddExpense = false
     @State private var selectedExpense: Expense?
@@ -29,6 +39,21 @@ struct DashboardView: View {
             .reduce(0) { $0 + $1.amount }
     }
 
+    private var spendingLimitPeriod: SpendingLimitPeriod {
+        SpendingLimitPeriod(rawValue: spendingLimitPeriodRawValue) ?? .monthly
+    }
+
+    private var currentLimitSpentAmount: Double {
+        DashboardSpendingLimitSupport.spentAmount(
+            for: spendingLimitPeriod,
+            in: expenses
+        )
+    }
+
+    private var shouldShowLimitCard: Bool {
+        isSpendingLimitEnabled && spendingLimitAmount > 0
+    }
+
     private var summaryColumns: [GridItem] {
         if dynamicTypeSize.isAccessibilitySize {
             return [GridItem(.flexible())]
@@ -43,6 +68,11 @@ struct DashboardView: View {
     var body: some View {
         AppScreen(title: "Expenses") {
             overviewSection
+
+            if shouldShowLimitCard {
+                spendingLimitSection
+            }
+
             recentExpensesSection
         } floatingAction: {
             AppFloatingActionButton(
@@ -85,6 +115,16 @@ struct DashboardView: View {
                 )
             }
         }
+    }
+
+    private var spendingLimitSection: some View {
+        SpendingLimitCardView(
+            title: DashboardSpendingLimitSupport.periodTitle(
+                for: spendingLimitPeriod
+            ),
+            spent: currentLimitSpentAmount,
+            limit: spendingLimitAmount
+        )
     }
 
     private var recentExpensesSection: some View {
@@ -153,7 +193,7 @@ struct DashboardView: View {
         }
         .frame(maxWidth: .infinity)
     }
-    
+
     private func deleteExpense(_ expense: Expense) {
         modelContext.delete(expense)
         try? modelContext.save()

@@ -17,6 +17,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Categories", systemImage: "square.grid.2x2.fill")
                 }
+            
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
         }
     }
 }

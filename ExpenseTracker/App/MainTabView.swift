@@ -7,6 +7,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Dashboard", systemImage: "list.bullet.rectangle")
                 }
+            
+            InsightsView()
+                .tabItem {
+                    Label("Insights", systemImage: "chart.bar.fill")
+                }
 
             CategoriesView()
                 .tabItem {

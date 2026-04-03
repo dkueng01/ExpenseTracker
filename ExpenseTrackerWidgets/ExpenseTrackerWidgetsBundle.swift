@@ -5,5 +5,6 @@ import WidgetKit
 struct ExpenseTrackerWidgetsBundle: WidgetBundle {
     var body: some Widget {
         WeeklySpendWidget()
+        SpendingLimitWidget()
     }
 }

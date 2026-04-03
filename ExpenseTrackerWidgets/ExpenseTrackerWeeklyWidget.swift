@@ -118,7 +118,7 @@ struct WeeklySpendWidget: Widget {
         }
         .configurationDisplayName("Weekly Spend")
         .description("See how much you spent this week.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall])
     }
 }
 

@@ -76,6 +76,10 @@
 				Core/Persistence/AppModelContainer.swift,
 				Core/Statistics/ExpenseStatistics.swift,
 				Features/Categories/Support/CategoryColorOption.swift,
+				Features/Settings/Support/DashboardSpendingLimitSupport.swift,
+				Features/Settings/Support/SettingsStorage.swift,
+				Features/Settings/Support/SharedSettings.swift,
+				Features/Settings/Support/SpendingLimitPeriod.swift,
 			);
 			target = 9F91032C2F73EF5A0006BE19 /* ExpenseTrackerWidgetsExtension */;
 		};

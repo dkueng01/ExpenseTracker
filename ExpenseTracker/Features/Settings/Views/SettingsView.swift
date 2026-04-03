@@ -9,13 +9,22 @@ struct SettingsView: View {
     @Query(sort: \ExpenseCategory.sortOrder) private var categories:
         [ExpenseCategory]
 
-    @AppStorage(SettingsStorage.isSpendingLimitEnabledKey)
+    @AppStorage(
+        SettingsStorage.isSpendingLimitEnabledKey,
+        store: SharedSettings.userDefaults
+    )
     private var isSpendingLimitEnabled = false
 
-    @AppStorage(SettingsStorage.spendingLimitAmountKey)
+    @AppStorage(
+        SettingsStorage.spendingLimitAmountKey,
+        store: SharedSettings.userDefaults
+    )
     private var spendingLimitAmount = 0.0
 
-    @AppStorage(SettingsStorage.spendingLimitPeriodKey)
+    @AppStorage(
+        SettingsStorage.spendingLimitPeriodKey,
+        store: SharedSettings.userDefaults
+    )
     private var spendingLimitPeriodRawValue = SpendingLimitPeriod.monthly.rawValue
 
     @State private var limitAmountText = ""
@@ -49,6 +58,15 @@ struct SettingsView: View {
                 )
             }
         }
+        .onChange(of: isSpendingLimitEnabled) { _, _ in
+                AppWidgetReloader.reloadAll()
+            }
+            .onChange(of: spendingLimitAmount) { _, _ in
+                AppWidgetReloader.reloadAll()
+            }
+            .onChange(of: spendingLimitPeriodRawValue) { _, _ in
+                AppWidgetReloader.reloadAll()
+            }
         .alert("Clear all data?", isPresented: $isShowingDeleteAllConfirmation) {
             Button("Continue", role: .destructive) {
                 isShowingFinalDeleteAllConfirmation = true

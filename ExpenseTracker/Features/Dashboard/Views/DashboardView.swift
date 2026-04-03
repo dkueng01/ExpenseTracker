@@ -7,15 +7,23 @@ struct DashboardView: View {
 
     @Query(sort: \Expense.date, order: .reverse) private var expenses: [Expense]
 
-    @AppStorage(SettingsStorage.isSpendingLimitEnabledKey)
+    @AppStorage(
+        SettingsStorage.isSpendingLimitEnabledKey,
+        store: SharedSettings.userDefaults
+    )
     private var isSpendingLimitEnabled = false
 
-    @AppStorage(SettingsStorage.spendingLimitAmountKey)
+    @AppStorage(
+        SettingsStorage.spendingLimitAmountKey,
+        store: SharedSettings.userDefaults
+    )
     private var spendingLimitAmount = 0.0
 
-    @AppStorage(SettingsStorage.spendingLimitPeriodKey)
-    private var spendingLimitPeriodRawValue =
-        SpendingLimitPeriod.monthly.rawValue
+    @AppStorage(
+        SettingsStorage.spendingLimitPeriodKey,
+        store: SharedSettings.userDefaults
+    )
+    private var spendingLimitPeriodRawValue = SpendingLimitPeriod.monthly.rawValue
 
     @State private var isShowingAddExpense = false
     @State private var selectedExpense: Expense?
